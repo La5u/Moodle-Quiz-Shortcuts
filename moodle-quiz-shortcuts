@@ -1,0 +1,89 @@
+// ==UserScript==
+// @name         Moodle Quiz Shorcuts
+// @namespace    http://tampermonkey.net/
+// @version      2025-01-20
+// @description  Enter/Backspace for Next/Previous question, Up/Down for selecting multiple choice question
+// @author       Lasu Shin
+// @match        https://moodle.yerlan.top/mod/quiz/attempt.php*
+// @icon         https://moodle.yerlan.top/theme/image.php/boost/theme/1730285596/favicon
+// @grant        none
+// ==/UserScript==
+
+//TODO
+//add support for jk instead of up/down
+//add support for prev question
+//add support for submitting quiz
+
+
+const text_field = document.getElementsByClassName('form-control d-inline')[0]
+const answers = document.getElementsByClassName('answer')[0]
+let radios = []
+let found_radio = false
+
+// if the question is a text field answer, select it
+if (text_field) {
+    text_field.select()
+// if the question has multiple choices, add them to the list radios
+} else if (answers) {
+    for (let i = 0; i < answers.children.length; i++) {
+        radios.push(answers.children[i].children[0]);
+    }
+}
+
+// listen for keydown events (up, down, enter, backspace)
+document.addEventListener( "keydown", function( e ) {
+    var keyCode = e.keyCode || e.which;
+    // check whether its a multiple choice question before checking for up and down arrows for movement
+    if (answers) {
+        found_radio = false
+        // DOWN ARROW - SELLECT PREVIOUS OPTION
+        if (keyCode === 40) {
+            for (let i = 0; i < answers.children.length; i++) {
+                if (radios[i].checked) {
+                    // select next option or the first option, if there is no next option
+                    let next = (i + 1) < radios.length ? i + 1 : 0;
+                    radios[next].checked = true
+                    found_radio = true
+                    break
+                }
+            }
+            // select first option if there are no selected
+            if (!found_radio) {
+                radios[0].checked = true
+            }
+
+        // UP ARROW - SELECT NEXT OPTION
+        } else if (keyCode === 38) {
+            for (let i = 0; i < answers.children.length; i++) {
+                if (radios[i].checked) {
+                    // select prev option or the last option if there are no prev options
+                    let prev = (i - 1) >= 0 ? i - 1 : radios.length-1;
+                    radios[prev].checked = true
+                    found_radio = true
+                    break
+                }
+            }
+            // select last option if there are no selected
+            if (!found_radio) {
+                radios[radios.length-1].checked = true
+            }
+        }
+    }
+    // ENTER - NEXT QUESTION BUTTON
+    if (keyCode === 13) {
+        const next_btn = document.getElementById('mod_quiz-next-nav')
+        if (!next_btn) {
+            console.log('Next button not found!')
+        }
+        next_btn.click()
+    }
+    // KEY? - PREV QUESTION BUTTON
+    //} else if (keyCode === KEY?) {
+    //    const prev_btn = document.getElementById('mod_quiz-prev-nav')
+    //    if (!prev_btn) {
+    //        console.log('Back button not found!')
+    //    }
+    //    prev_btn.click()
+    //}
+}, false);
+
