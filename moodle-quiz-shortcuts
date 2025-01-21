@@ -15,13 +15,18 @@
 //add support for jk instead of up/down
 //add support for prev question
 //add support for submitting quiz
+//return prev btn without taking away enter functionality
 
-//remove button bec sometimes it goes back
-document.getElementById('mod_quiz-prev-nav').remove()
+const prev_btn = document.getElementById('mod_quiz-prev-nav')
 const text_field = document.getElementsByClassName('form-control d-inline')[0]
 const answers = document.getElementsByClassName('answer')[0]
 let radios = []
 let found_radio = false
+
+if (prev_btn) {
+    //remove button bec sometimes it goes back
+    prev_btn.remove()
+}
 
 // if the question is a text field answer, select it
 if (text_field) {
