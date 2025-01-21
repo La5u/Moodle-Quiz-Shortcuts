@@ -9,6 +9,8 @@
 // @grant        none
 // ==/UserScript==
 
+// ENABLE DEV MODE IN CHROME/EDGE
+
 //TODO
 //add support for jk instead of up/down
 //add support for prev question
