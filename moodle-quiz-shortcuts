@@ -14,7 +14,8 @@
 //add support for prev question
 //add support for submitting quiz
 
-
+//remove button bec sometimes it goes back
+document.getElementById('mod_quiz-prev-nav').remove()
 const text_field = document.getElementsByClassName('form-control d-inline')[0]
 const answers = document.getElementsByClassName('answer')[0]
 let radios = []
