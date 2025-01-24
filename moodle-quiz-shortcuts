@@ -1,12 +1,14 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-20
+// @version      2025-01-24
 // @description  Enter/Backspace for Next/Previous question, Up/Down for selecting multiple choice question
 // @author       Lasu Shin
-// @match        https://moodle.yerlan.top/mod/quiz/attempt.php*
+// @match        https://moodle.yerlan.top/mod/quiz/*
 // @icon         https://moodle.yerlan.top/theme/image.php/boost/theme/1730285596/favicon
 // @grant        none
+// @downloadURL https://update.greasyfork.org/scripts/524310/Moodle%20Quiz%20Shorcuts.user.js
+// @updateURL https://update.greasyfork.org/scripts/524310/Moodle%20Quiz%20Shorcuts.meta.js
 // ==/UserScript==
 
 // ENABLE DEV MODE IN CHROME/EDGE
@@ -14,7 +16,6 @@
 //TODO
 //add support for jk instead of up/down
 //add support for prev question
-//add support for submitting quiz
 //return prev btn without taking away enter functionality
 
 const prev_btn = document.getElementById('mod_quiz-prev-nav')
@@ -82,8 +83,16 @@ document.addEventListener( "keydown", function( e ) {
         const next_btn = document.getElementById('mod_quiz-next-nav')
         if (!next_btn) {
             console.log('Next button not found!')
+            let submit_btn = document.getElementsByClassName('btn btn-primary')[0]
+            let save_btn = document.querySelector('.btn.btn-primary[data-action=save]')
+            if (!save_btn) {
+                submit_btn.click()
+            } else {
+                save_btn.click()
+            }
+        } else {
+            next_btn.click()
         }
-        next_btn.click()
     }
     // KEY? - PREV QUESTION BUTTON
     //} else if (keyCode === KEY?) {
