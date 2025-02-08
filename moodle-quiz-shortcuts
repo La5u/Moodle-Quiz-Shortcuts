@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-28
+// @version      2025-02-08
 // @description  Enter/Backspace for Next/Previous question, Up/Down for selecting multiple choice question
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -15,7 +15,6 @@
 
 //TODO
 //add support for jk instead of up/down
-//add support for prev question
 //return prev btn without taking away enter functionality
 const prev_btn = document.getElementById('mod_quiz-prev-nav')
 const text_field = document.getElementsByClassName('form-control d-inline')[0]
@@ -48,95 +47,91 @@ if (savedAnswers) {
     // Get the current question text
     const questionElement = document.querySelector('.qtext');
     if (questionElement) {
-        const questionText = questionElement.innerText.trim();
+
+        let questionText = questionElement.innerText;
+        if (questionText.includes('Answer Question')){
+            questionText = questionText.split(' ').filter((_, i) => i !== 2).join(' ')
+        }
+
         const savedAnswer = answers[questionText];
+        console.log(questionText)
 
         // If we have a saved answer for this question
         if (savedAnswer) {
             // For text input questions
             if (text_field) {
                 text_field.value = savedAnswer;
-                text_field.select();
+                console.log('suc')
             }
             // For multiple choice questions
             else if (radios.length > 0) {
                 for (let radio of radios) {
-                    if (radio.parentElement.innerText.trim() === savedAnswer) {
+                    const answerText = radio.parentElement.innerText.trim();
+                    if (answerText.includes(savedAnswer)) {
                         radio.checked = true;
                         break;
                     }
                 }
             }
+            handleNextButton()
+
         }
     }
-} else {
-    // listen for keydown events (up, down, enter, backspace)
-    document.addEventListener( "keydown", function( e ) {
-        var keyCode = e.keyCode || e.which;
-        // check whether its a multiple choice question before checking for up and down arrows for movement
-        if (answers) {
-            found_radio = false
-            // DOWN ARROW - SELLECT PREVIOUS OPTION
-            if (keyCode === 40) {
-                for (let i = 0; i < answers.children.length; i++) {
-                    if (radios[i].checked) {
-                        // select next option or the first option, if there is no next option
-                        let next = (i + 1) < radios.length ? i + 1 : 0;
-                        radios[next].checked = true
-                        found_radio = true
-                        break
-                    }
-                }
-                // select first option if there are no selected
-                if (!found_radio) {
-                    radios[0].checked = true
-                }
-
-            // UP ARROW - SELECT NEXT OPTION
-            } else if (keyCode === 38) {
-                for (let i = 0; i < answers.children.length; i++) {
-                    if (radios[i].checked) {
-                        // select prev option or the last option if there are no prev options
-                        let prev = (i - 1) >= 0 ? i - 1 : radios.length-1;
-                        radios[prev].checked = true
-                        found_radio = true
-                        break
-                    }
-                }
-                // select last option if there are no selected
-                if (!found_radio) {
-                    radios[radios.length-1].checked = true
-                }
-            }
-        }
-
-        // SHIFT + ENTER - GO BACK
-        if (e.shiftKey && keyCode === 13) {
-            window.history.back();
-        }
-        // ENTER - NEXT QUESTION BUTTON
-        else if (keyCode === 13) {
-            const next_btn = document.getElementById('mod_quiz-next-nav')
-            if (!next_btn) {
-                console.log('Next button not found!')
-                let submit_btn = document.getElementsByClassName('btn btn-primary')[0]
-                let save_btn = document.querySelector('.btn.btn-primary[data-action=save]')
-                if (!save_btn) {
-                    submit_btn.click()
-                } else {
-                    save_btn.click()
-                }
-            } else {
-                next_btn.click()
-            }
-        }
-
-    }, false);
 }
+// listen for keydown events (up, down, enter, backspace)
+document.addEventListener( "keydown", function( e ) {
+    var keyCode = e.keyCode || e.which;
+    // check whether its a multiple choice question before checking for up and down arrows for movement
+    if (answers) {
+        found_radio = false
+        // DOWN ARROW - SELLECT PREVIOUS OPTION
+        if (keyCode === 40) {
+            for (let i = 0; i < answers.children.length; i++) {
+                if (radios[i].checked) {
+                    // select next option or the first option, if there is no next option
+                    let next = (i + 1) < radios.length ? i + 1 : 0;
+                    radios[next].checked = true
+                    found_radio = true
+                    break
+                }
+            }
+            // select first option if there are no selected
+            if (!found_radio) {
+                radios[0].checked = true
+            }
+
+        // UP ARROW - SELECT NEXT OPTION
+        } else if (keyCode === 38) {
+            for (let i = 0; i < answers.children.length; i++) {
+                if (radios[i].checked) {
+                    // select prev option or the last option if there are no prev options
+                    let prev = (i - 1) >= 0 ? i - 1 : radios.length-1;
+                    radios[prev].checked = true
+                    found_radio = true
+                    break
+                }
+            }
+            // select last option if there are no selected
+            if (!found_radio) {
+                radios[radios.length-1].checked = true
+            }
+        }
+    }
+
+    // SHIFT + ENTER - GO BACK
+    if (e.shiftKey && keyCode === 13) {
+        window.history.back();
+    }
+    // ENTER - NEXT QUESTION BUTTON
+    else if (keyCode === 13) {
+        handleNextButton();
+    }
+
+}, false);
 
 function saveQuizAnswers() {
     // Only run if we're on the correct page
-    if (!window.location.href.startsWith('https://moodle.yerlan.top/mod/quiz/review.php')) {
+    if (!window.location.href.startsWith('https://moodle.yerlan.top/mod/quiz/review.php') || !window.location.href.includes('showall=1')) {
         return;
     }
 
@@ -153,20 +148,36 @@ function saveQuizAnswers() {
         try {
             questionElements = question.children[1].children;
         } catch (error) {
-            console.log(question.children[0]);
             continue;
         }
 
-        const questionTextLines = questionElements[0].innerText.split('\n');
-        const questionText = questionTextLines[questionTextLines.length - 1];
-        const questionAnswer = questionElements[1].innerText.split('\n')[1];
+        let questionText = questionElements[0].children[2].innerText;
+        if (questionText.includes('Answer Question')){
+            questionText = questionText.split(' ').filter((_, i) => i !== 2).join(' ')
+        }
+        const questionAnswer = questionElements[1].innerText.split(': ')[1];
         answers[questionText] = questionAnswer;
     }
 
     localStorage.setItem('lastReviewAnswers', JSON.stringify(answers));
-    messagebox('SAVED ANSWERS');
+    alert('SAVED ANSWERS');
+    console.log(answers)
+}
+
+function handleNextButton() {
+    const next_btn = document.getElementById('mod_quiz-next-nav')
+    if (!next_btn) {
+        console.log('Next button not found!')
+        let submit_btn = document.getElementsByClassName('btn btn-primary')[0]
+        let save_btn = document.querySelector('.btn.btn-primary[data-action=save]')
+        if (!save_btn) {
+            submit_btn.click()
+        } else {
+            save_btn.click()
+        }
+    } else {
+        next_btn.click()
+    }
 }
 
 saveQuizAnswers()
-
-
