@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-02-08
+// @version      2025-02-10
 // @description  Enter/Backspace for Next/Previous question, Up/Down for selecting multiple choice question
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -131,7 +131,7 @@ document.addEventListener( "keydown", function( e ) {
 
 function saveQuizAnswers() {
     // Only run if we're on the correct page
-    if (!window.location.href.startsWith('https://moodle.yerlan.top/mod/quiz/review.php') || !window.location.href.includes('showall=1')) {
+    if (!window.location.href.startsWith('https://moodle.yerlan.top/mod/quiz/review.php')) {
         return;
     }
 
@@ -142,6 +142,9 @@ function saveQuizAnswers() {
         .children[1]
         .children[0]
         .children;
+    if (form.length <=3) {
+        return
+    }
 
     for (let question of form) {
         let questionElements;
