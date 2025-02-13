@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-02-11
-// @description  Enter/Backspace for Next/Previous question, Up/Down for selecting multiple choice question
+// @version      2025-02-13
+// @description  Enter/Shift-Enter for Next/Previous question, Up/Down for selecting multiple choice question, autoanswer
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
 // @icon         https://moodle.yerlan.top/theme/image.php/boost/theme/1730285596/favicon
@@ -11,7 +11,7 @@
 // @updateURL https://update.greasyfork.org/scripts/524310/Moodle%20Quiz%20Shorcuts.meta.js
 // ==/UserScript==
 
-// ENABLE DEV MODE IN CHROME/EDGE
+// ENABLE DEV MODE IN CHROME/EDGE TO USE (firefox is safe:)
 
 //TODO
 //return prev btn without taking away enter functionality
@@ -23,7 +23,7 @@ let radios = []
 let multiple_choice = false
 let selected = 0
 if (prev_btn) {
-    //remove button bec sometimes it goes back
+    //remove button bec sometimes it goes back when pressing enter for some reason
     prev_btn.remove()
 }
 
@@ -38,9 +38,9 @@ else if (answers) {
     multiple_choice = !isRadio; // Set multiple_choice to true if not radio
 
     for (let child of answers.children) {
+        // the radio button is index 0 for radios and 1 for multiple choice
         radios.push(isRadio ? child.children[0] : child.children[1]);
     }
-
 
     for (let i = 0; i < answers.children.length; i++) {
         if (radios[i].checked) {
@@ -64,7 +64,7 @@ function normalize(text) {
     const words = text.split(' ');
     const startIndex = words.indexOf('Answer');
 
-    // If "Answer" is found, remove 3 words starting from it
+    // If "Answer" is found, remove 3 words starting from it (Answer question X)
     if (startIndex !== -1) {
         return words
             .slice(0, startIndex) // Keep everything before "Answer"
@@ -83,8 +83,6 @@ function saveQuizAnswers() {
         return;
     }
 
-    const answers = {};
-
     const form = document.getElementById('region-main')
         .children[3]
         .children[1]
@@ -95,6 +93,8 @@ function saveQuizAnswers() {
         return
     }
 
+    const answers = {};
+
     for (let question of form) {
         if (!question || !question.children[1]) {
             continue
@@ -102,7 +102,7 @@ function saveQuizAnswers() {
         const questionElements = question.children[1].children;
 
         const questionText = normalize(questionElements[0].children[2].textContent)
-        const questionAnswer = questionElements[1].innerText.split(': ')[1];
+        const questionAnswer = questionElements[1].innerText.split(/: (.+)/)[1]; //only splits first ": "
         answers[questionText] = questionAnswer;
     }
 
@@ -132,11 +132,12 @@ function answer(savedAnswer) {
         text_field.value = savedAnswer;
     } else if (radios.length > 0) {
         for (let radio of radios) {
+            //if its a multiple choice, then the answer is the 3rd ([2]) element if its radios then [1]. substr 3 gets rid of the a. b. c. d.
             const answerText = radio.parentElement.children[multiple_choice ? 2 : 1].textContent.substr(3)
             if (answerText == savedAnswer) {
-                console.log(answerText, savedAnswer)
-                check(radio)
-                break;
+                radio.checked = true
+            } else {
+                radio.checked = false
             }
         }
     }
@@ -152,10 +153,9 @@ function autoAnswer() {
         if (questionElement) {
 
             let questionText = normalize(questionElement.textContent)
-            console.log(questionText)
             const savedAnswer = answers[questionText];
+            console.log(questionText)
 
-            // If we have a saved answer for this question
             if (savedAnswer) {
                 answer(savedAnswer)
             }
@@ -163,20 +163,29 @@ function autoAnswer() {
     }
 }
 
+//MAIN PROGRAM
 autoAnswer()
 saveQuizAnswers()
+
+//focus on text field when returning to site from another tab
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+      if (text_field) {
+          text_field.select()
+      }
+  }
+});
+
 
 // listen for keydown events (up, down, enter, backspace)
 document.addEventListener( "keydown", function( e ) {
     var keyCode = e.keyCode || e.which;
     // check whether its a multiple choice question before checking for up and down arrows for movement
     if (answers) {
-        let found_radio = false
         // DOWN ARROW - SELLECT PREVIOUS OPTION
         if (keyCode === 40) {
             selected = (selected + 1) % radios.length
             check(radios[selected])
-
 
         // UP ARROW - SELECT NEXT OPTION
         } else if (keyCode === 38) {
