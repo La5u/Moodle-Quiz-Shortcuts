@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-02-13
+// @version      2025-02-18
 // @description  Enter/Shift-Enter for Next/Previous question, Up/Down for selecting multiple choice question, autoanswer
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -21,7 +21,7 @@ const text_field = document.getElementsByClassName('form-control d-inline')[0]
 const answers = document.getElementsByClassName('answer')[0]
 let radios = []
 let multiple_choice = false
-let selected = 0
+let selected = null
 if (prev_btn) {
     //remove button bec sometimes it goes back when pressing enter for some reason
     prev_btn.remove()
@@ -47,6 +47,10 @@ else if (answers) {
             selected = i
             break
         }
+    }
+    if (selected == null) {
+        check(radios[0])
+        selected = 0
     }
 }
 
@@ -204,6 +208,3 @@ document.addEventListener( "keydown", function( e ) {
     }
 
 }, false);
-
-
-
