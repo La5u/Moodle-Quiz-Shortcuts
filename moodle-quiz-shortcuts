@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-02-18
+// @version      2025-02-28
 // @description  Enter/Shift-Enter for Next/Previous question, Up/Down for selecting multiple choice question, autoanswer
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -187,12 +187,14 @@ document.addEventListener( "keydown", function( e ) {
     // check whether its a multiple choice question before checking for up and down arrows for movement
     if (answers) {
         // DOWN ARROW - SELLECT PREVIOUS OPTION
-        if (keyCode === 40) {
+        if (keyCode === 40 || keyCode === 74) {
+            radios[selected].checked = false
             selected = (selected + 1) % radios.length
             check(radios[selected])
 
         // UP ARROW - SELECT NEXT OPTION
-        } else if (keyCode === 38) {
+        } else if (keyCode === 38 || keyCode === 75) {
+            radios[selected].checked = false
             selected = (selected + 3) % radios.length
             check(radios[selected])
         }
@@ -208,3 +210,6 @@ document.addEventListener( "keydown", function( e ) {
     }
 
 }, false);
+
+
+
