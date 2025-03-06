@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-02-28
+// @version      2025-03-06
 // @description  Enter/Shift-Enter for Next/Previous question, Up/Down for selecting multiple choice question, autoanswer
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -18,7 +18,7 @@
 
 const prev_btn = document.getElementById('mod_quiz-prev-nav')
 const text_field = document.getElementsByClassName('form-control d-inline')[0]
-const answers = document.getElementsByClassName('answer')[0]
+const options = document.getElementsByClassName('answer')[0]
 let radios = []
 let multiple_choice = false
 let selected = null
@@ -33,16 +33,16 @@ if (text_field) {
 }
 // if the question has multiple choices, add them to the list radios
 
-else if (answers) {
-    const isRadio = answers.children[0]?.children[0]?.type === "radio";
+else if (options) {
+    const isRadio = options.children[0]?.children[0]?.type === "radio";
     multiple_choice = !isRadio; // Set multiple_choice to true if not radio
 
-    for (let child of answers.children) {
+    for (let child of options.children) {
         // the radio button is index 0 for radios and 1 for multiple choice
         radios.push(isRadio ? child.children[0] : child.children[1]);
     }
 
-    for (let i = 0; i < answers.children.length; i++) {
+    for (let i = 0; i < options.children.length; i++) {
         if (radios[i].checked) {
             selected = i
             break
@@ -157,7 +157,10 @@ function autoAnswer() {
         if (questionElement) {
 
             let questionText = normalize(questionElement.textContent)
-            const savedAnswer = answers[questionText];
+            let savedAnswer = answers[questionText];
+            if (!savedAnswer && options.textContent.includes(questionText)) {
+                savedAnswer = questionText
+            }
             console.log(questionText)
 
             if (savedAnswer) {
@@ -185,7 +188,7 @@ document.addEventListener("visibilitychange", () => {
 document.addEventListener( "keydown", function( e ) {
     var keyCode = e.keyCode || e.which;
     // check whether its a multiple choice question before checking for up and down arrows for movement
-    if (answers) {
+    if (options) {
         // DOWN ARROW - SELLECT PREVIOUS OPTION
         if (keyCode === 40 || keyCode === 74) {
             radios[selected].checked = false
