@@ -158,7 +158,7 @@ function autoAnswer() {
 
             let questionText = normalize(questionElement.textContent)
             let savedAnswer = answers[questionText];
-            if (!savedAnswer && options.textContent.includes(questionText)) {
+            if (!savedAnswer && options && options.textContent.includes(questionText)) {
                 savedAnswer = questionText
             }
             console.log(questionText)
