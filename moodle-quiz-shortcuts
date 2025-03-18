@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-03-06
+// @version      2025-03-18
 // @description  Enter/Shift-Enter for Next/Previous question, Up/Down for selecting multiple choice question, autoanswer
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -149,23 +149,20 @@ function answer(savedAnswer) {
 }
 
 function autoAnswer() {
-    // Check if there are saved answers in localStorage
-    const savedAnswers = localStorage.getItem('lastReviewAnswers');
-    if (savedAnswers) {
-        const answers = JSON.parse(savedAnswers);
-        const questionElement = document.querySelector('.qtext');
-        if (questionElement) {
+    const questionElement = document.querySelector('.qtext');
+    if (questionElement) {
+        // Check if there are saved answers in localStorage
+        const savedAnswers = localStorage.getItem('lastReviewAnswers');
+        const answers = JSON.parse(savedAnswers) || {}
 
-            let questionText = normalize(questionElement.textContent)
-            let savedAnswer = answers[questionText];
-            if (!savedAnswer && options && options.textContent.includes(questionText)) {
-                savedAnswer = questionText
-            }
-            console.log(questionText)
+        let questionText = normalize(questionElement.textContent)
+        let savedAnswer = answers[questionText];
+        if (!savedAnswer && options && options.textContent.includes(questionText)) {
+            savedAnswer = questionText
+        }
 
-            if (savedAnswer) {
-                answer(savedAnswer)
-            }
+        if (savedAnswer) {
+            answer(savedAnswer)
         }
     }
 }
