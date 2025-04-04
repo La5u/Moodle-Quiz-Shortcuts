@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Moodle Quiz Shorcuts
 // @namespace    http://tampermonkey.net/
-// @version      2025-03-18
+// @version      2025-04-04
 // @description  Enter/Shift-Enter for Next/Previous question, Up/Down for selecting multiple choice question, autoanswer
 // @author       Lasu Shin
 // @match        https://moodle.yerlan.top/mod/quiz/*
@@ -209,7 +209,7 @@ document.addEventListener( "keydown", function( e ) {
         handleNextButton();
     }
 
-}, false);
+}, { capture: true });
 
 
 
